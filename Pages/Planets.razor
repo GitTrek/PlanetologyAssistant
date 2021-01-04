@@ -1,0 +1,84 @@
+﻿@page "/planets"
+@inject HttpClient Http
+
+<h1>Weather forecast</h1>
+
+<p>This component demonstrates fetching data from the server.</p>
+
+@if (planetDataItems == null)
+{
+	<p><em>Loading...</em></p>
+}
+else
+{
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Date</th>
+				<th>Temp. (C)</th>
+				<th>Temp. (F)</th>
+				<th>Summary</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var planetDataItem in planetDataItems)
+			{
+				<tr>
+					<td>@planetDataItem.item_id</td>
+					<td>@planetDataItem.name</td>
+					<td>@planetDataItem.time.ToShortDateString()</td>
+					<td>@planetDataItem.lowest_sell</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+}
+
+@code {
+	private List<PlanetMaterialMarketDataItem> planetDataItems;
+
+	protected override async Task OnInitializedAsync()
+	{
+		var statsString = await Http.GetStringAsync("echoes-data/stats.csv");
+		var statsStringList = statsString.Split(
+			new[] { Environment.NewLine },
+			StringSplitOptions.None).ToList();
+		// remove header
+		statsStringList.Remove(statsStringList.First());
+
+		foreach(var statsStringRow in statsStringList)
+		{
+			var propList = statsStringRow.Split(',').ToList();
+
+			if (propList.Count() > 0)
+			{
+				var newDataItem = new PlanetMaterialMarketDataItem();
+
+				for (int itemIdx = 0; itemIdx < propList.Count(); itemIdx++)
+				{
+					switch(itemIdx){
+						case 0: newDataItem.item_id = Convert.ToInt32(propList[itemIdx]); break;
+						case 1: newDataItem.name = Convert.ToString(propList[itemIdx]); break;
+						case 2: newDataItem.time = Convert.ToDateTime(propList[itemIdx]); break;
+						case 3: newDataItem.sell = Convert.ToDouble(propList[itemIdx]); break;
+						case 4: newDataItem.buy = Convert.ToDouble(propList[itemIdx]); break;
+						case 5: newDataItem.lowest_sell = Convert.ToDouble(propList[itemIdx]); break;
+						case 6: newDataItem.highest_buy = Convert.ToDouble(propList[itemIdx]); break;
+						default: break;
+					}
+				}
+			}
+		}
+	}
+
+	public class PlanetMaterialMarketDataItem
+	{
+		public int item_id { get; set; }
+		public string name { get; set; }
+		public DateTime time { get; set; }
+		public Double sell { get; set; }
+		public Double buy { get; set; }
+		public Double lowest_sell { get; set; }
+		public Double highest_buy { get; set; }
+	}
+}
